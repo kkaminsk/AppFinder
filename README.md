@@ -6,8 +6,8 @@ Originally written by Marin Alexandruradu. This is a fork by Kevin Kaminski to a
 
 Enter in the application name or partial name then press Search or the enter key.
 
-![AppFinderTableau](https://github.com/kkaminsk/AppFinder/assets/1.gif)
+![AppFinderTableau](https://github.com/kkaminsk/AppFinder/doc/assets/1.gif)
 
 Use the copy button to Copy the output to your clipboard or use the Open button to open the output in Notepad.
 
-![AppFinder](https://github.com/kkaminsk/AppFinder/assets/2.gif)
+![AppFinder](https://github.com/kkaminsk/AppFinder/doc/assets/2.gif)
