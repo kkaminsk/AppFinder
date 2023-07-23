@@ -45,7 +45,7 @@ $txtAppName.Width = 200
 # Create a button for searching
 $btnSearch = New-Object System.Windows.Forms.Button
 $btnSearch.Text = "Search"
-$btnSearch.Location = New-Object System.Drawing.Point(150, 60)
+$btnSearch.Location = New-Object System.Drawing.Point(50, 60)
 
 # Create a text box for displaying the output
 $txtOutput = New-Object System.Windows.Forms.TextBox
@@ -55,6 +55,37 @@ $txtOutput.Location = New-Object System.Drawing.Point(20, 100)
 $txtOutput.Width = 360
 $txtOutput.Height = 240
 $txtOutput.ReadOnly = $true
+
+# Create a "Copy to Clipboard" button
+$btnCopyToClipboard = New-Object System.Windows.Forms.Button
+$btnCopyToClipboard.Text = "Copy"
+$btnCopyToClipboard.Location = New-Object System.Drawing.Point(150, 60)
+$btnCopyToClipboard.Add_Click({
+    [System.Windows.Forms.Clipboard]::SetText($txtOutput.Text)
+})
+
+# Add the "Copy to Clipboard" button to the form
+$form.Controls.Add($btnCopyToClipboard)
+
+# Create a "Open in Notepad" button
+$btnOpenInNotepad = New-Object System.Windows.Forms.Button
+$btnOpenInNotepad.Text = "Notepad"
+$btnOpenInNotepad.Location = New-Object System.Drawing.Point(250, 60)  # You might want to adjust the location as needed
+
+$btnOpenInNotepad.Add_Click({
+    # Create a temporary text file
+    $tempFile = [System.IO.Path]::GetTempFileName()
+
+    # Write the output to the file
+    $txtOutput.Text | Out-File -FilePath $tempFile -Encoding utf8
+
+    # Open the file in Notepad
+    Start-Process -FilePath "notepad.exe" -ArgumentList $tempFile
+})
+
+# Add the "Open in Notepad" button to the form
+$form.Controls.Add($btnOpenInNotepad)
+
 
 # Define the search function
 function Search {
