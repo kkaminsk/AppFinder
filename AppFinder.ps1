@@ -20,7 +20,7 @@ $menuAbout.Text = "About"
 
 # Handle the "About" menu item click event
 $menuAbout.Add_Click({
-    Start-Process "https://www.alexandrumarin.com"
+    Start-Process "https://github.com/kkaminsk/AppFinder"
 })
 
 # Add the "About" menu item to the "Help" menu
