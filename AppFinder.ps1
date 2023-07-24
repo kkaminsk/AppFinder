@@ -1,10 +1,11 @@
-﻿Add-Type -AssemblyName System.Windows.Forms
+## minor tweaks to UI and Progress bar
+Add-Type -AssemblyName System.Windows.Forms
 
 # Create a form
 $form = New-Object System.Windows.Forms.Form
 $form.Text = "App Finder"
 $form.Width = 400
-$form.Height = 400
+$form.Height = 450  # Adjusted form height to accommodate progress bar
 $form.StartPosition = "CenterScreen"
 
 # Create a menu bar
@@ -17,14 +18,49 @@ $menuHelp.Text = "Help"
 # Create an "About" menu item
 $menuAbout = New-Object System.Windows.Forms.MenuItem
 $menuAbout.Text = "About"
-
-# Handle the "About" menu item click event
 $menuAbout.Add_Click({
     Start-Process "https://github.com/kkaminsk/AppFinder"
 })
 
 # Add the "About" menu item to the "Help" menu
 $menuHelp.MenuItems.Add($menuAbout)
+
+# Create a "Copy to Clipboard" menu item
+$menuCopyToClipboard = New-Object System.Windows.Forms.MenuItem
+$menuCopyToClipboard.Text = "Copy to Clipboard"
+$menuCopyToClipboard.Add_Click({
+    [System.Windows.Forms.Clipboard]::SetText($txtOutput.Text)
+})
+
+# Add the "Copy to Clipboard" menu item to the main menu
+$mainMenu.MenuItems.Add($menuCopyToClipboard)
+
+# Create an "Open in Notepad" menu item
+$menuOpenInNotepad = New-Object System.Windows.Forms.MenuItem
+$menuOpenInNotepad.Text = "Open in Notepad"
+$menuOpenInNotepad.Add_Click({
+    # Create a temporary text file
+    $tempFile = [System.IO.Path]::GetTempFileName()
+
+    # Write the output to the file
+    $txtOutput.Text | Out-File -FilePath $tempFile -Encoding utf8
+
+    # Open the file in Notepad
+    Start-Process -FilePath "notepad.exe" -ArgumentList $tempFile
+})
+
+# Add the "Open in Notepad" menu item to the main menu
+$mainMenu.MenuItems.Add($menuOpenInNotepad)
+
+# Create a "Clear Textbox" menu item
+$menuClearTextbox = New-Object System.Windows.Forms.MenuItem
+$menuClearTextbox.Text = "Clear"
+$menuClearTextbox.Add_Click({
+    $txtOutput.Text = ""
+})
+
+# Add the "Clear Textbox" menu item to the main menu
+$mainMenu.MenuItems.Add($menuClearTextbox)
 
 # Add the "Help" menu to the main menu
 $mainMenu.MenuItems.Add($menuHelp)
@@ -56,36 +92,14 @@ $txtOutput.Width = 360
 $txtOutput.Height = 240
 $txtOutput.ReadOnly = $true
 
-# Create a "Copy to Clipboard" button
-$btnCopyToClipboard = New-Object System.Windows.Forms.Button
-$btnCopyToClipboard.Text = "Copy"
-$btnCopyToClipboard.Location = New-Object System.Drawing.Point(150, 60)
-$btnCopyToClipboard.Add_Click({
-    [System.Windows.Forms.Clipboard]::SetText($txtOutput.Text)
-})
+# Create a progress bar
+$progressBar = New-Object System.Windows.Forms.ProgressBar
+$progressBar.Location = New-Object System.Drawing.Point(20, 346)  # Adjusted the Y-axis location
+$progressBar.Width = 360
+$progressBar.Height = 20
+$progressBar.Style = 'Continuous'
 
-# Add the "Copy to Clipboard" button to the form
-$form.Controls.Add($btnCopyToClipboard)
-
-# Create a "Open in Notepad" button
-$btnOpenInNotepad = New-Object System.Windows.Forms.Button
-$btnOpenInNotepad.Text = "Notepad"
-$btnOpenInNotepad.Location = New-Object System.Drawing.Point(250, 60)  # You might want to adjust the location as needed
-
-$btnOpenInNotepad.Add_Click({
-    # Create a temporary text file
-    $tempFile = [System.IO.Path]::GetTempFileName()
-
-    # Write the output to the file
-    $txtOutput.Text | Out-File -FilePath $tempFile -Encoding utf8
-
-    # Open the file in Notepad
-    Start-Process -FilePath "notepad.exe" -ArgumentList $tempFile
-})
-
-# Add the "Open in Notepad" button to the form
-$form.Controls.Add($btnOpenInNotepad)
-
+$form.Controls.Add($progressBar)
 
 # Define the search function
 function Search {
@@ -97,6 +111,10 @@ function Search {
         "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall",
         "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"
     )
+
+    # Set progress bar maximum value
+    $progressBar.Maximum = $registryPaths.Count
+    $progressBar.Value = 0
 
     # Create a string builder to store the output
     $output = New-Object System.Text.StringBuilder
@@ -129,10 +147,16 @@ function Search {
                 $output.AppendLine("---------------------------------------------------")
             }
         }
+
+        # Increase the value of progress bar
+        $progressBar.Value++
     }
 
     # Set the output text in the text box
     $txtOutput.Text = $output.ToString()
+
+    # Reset progress bar
+    $progressBar.Value = 0
 }
 
 # Add the search function to the button click event
