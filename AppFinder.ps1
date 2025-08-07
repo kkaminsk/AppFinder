@@ -1,11 +1,20 @@
 ﻿Add-Type -AssemblyName System.Windows.Forms
 
-# Create a form
-$form = New-Object System.Windows.Forms.Form
-$form.Text = "App Finder"
-$form.Width = 400
-$form.Height = 400
-$form.StartPosition = "CenterScreen"
+# Error handling function
+function Show-Error {
+    param([string]$errorMessage)
+    [System.Windows.Forms.MessageBox]::Show($errorMessage, "Error", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Error)
+}
+
+try {
+    Write-Host "Creating GUI..."
+    
+    # Create a form
+    $form = New-Object System.Windows.Forms.Form
+    $form.Text = "App Finder"
+    $form.Width = 400
+    $form.Height = 400
+    $form.StartPosition = "CenterScreen"
 
 # Create a menu bar
 $mainMenu = New-Object System.Windows.Forms.MainMenu
@@ -98,41 +107,41 @@ function Search {
         "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"
     )
 
-    # Create a string builder to store the output
-    $output = New-Object System.Text.StringBuilder
+# Create an array to store the output
+$outputArray = @()
 
-    # Loop through each registry path and retrieve the list of subkeys
-    foreach ($path in $registryPaths) {
-        $uninstallKeys = Get-ChildItem -Path $path -ErrorAction SilentlyContinue
+# Loop through each registry path and retrieve the list of subkeys
+foreach ($path in $registryPaths) {
+    $uninstallKeys = Get-ChildItem -Path $path -ErrorAction SilentlyContinue
 
-        # Skip if the registry path doesn't exist
-        if (-not $uninstallKeys) {
-            continue
-        }
-
-        # Loop through each uninstall key and append the properties of the target application to the output
-        foreach ($key in $uninstallKeys) {
-            $keyPath = Join-Path -Path $path -ChildPath $key.PSChildName
-
-            $displayName = (Get-ItemProperty -Path $keyPath -Name "DisplayName" -ErrorAction SilentlyContinue).DisplayName
-            $uninstallString = (Get-ItemProperty -Path $keyPath -Name "UninstallString" -ErrorAction SilentlyContinue).UninstallString
-            $version = (Get-ItemProperty -Path $keyPath -Name "DisplayVersion" -ErrorAction SilentlyContinue).DisplayVersion
-            $publisher = (Get-ItemProperty -Path $keyPath -Name "Publisher" -ErrorAction SilentlyContinue).Publisher
-            $installLocation = (Get-ItemProperty -Path $keyPath -Name "InstallLocation" -ErrorAction SilentlyContinue).InstallLocation
-
-            if ($displayName -match $targetAppName) {
-                $output.AppendLine("DisplayName: $displayName")
-                $output.AppendLine("UninstallString: $uninstallString")
-                $output.AppendLine("Version: $version")
-                $output.AppendLine("Publisher: $publisher")
-                $output.AppendLine("InstallLocation: $installLocation")
-                $output.AppendLine("---------------------------------------------------")
-            }
-        }
+    # Skip if the registry path doesn't exist
+    if (-not $uninstallKeys) {
+        continue
     }
 
-    # Set the output text in the text box
-    $txtOutput.Text = $output.ToString()
+    # Loop through each uninstall key and append the properties of the target application to the output
+    foreach ($key in $uninstallKeys) {
+        $keyPath = Join-Path -Path $path -ChildPath $key.PSChildName
+
+        $displayName = (Get-ItemProperty -Path $keyPath -Name "DisplayName" -ErrorAction SilentlyContinue).DisplayName
+        $uninstallString = (Get-ItemProperty -Path $keyPath -Name "UninstallString" -ErrorAction SilentlyContinue).UninstallString
+        $version = (Get-ItemProperty -Path $keyPath -Name "DisplayVersion" -ErrorAction SilentlyContinue).DisplayVersion
+        $publisher = (Get-ItemProperty -Path $keyPath -Name "Publisher" -ErrorAction SilentlyContinue).Publisher
+        $installLocation = (Get-ItemProperty -Path $keyPath -Name "InstallLocation" -ErrorAction SilentlyContinue).InstallLocation
+
+        if ($displayName -match $targetAppName) {
+            $outputArray += "DisplayName: $displayName"
+            $outputArray += "UninstallString: $uninstallString"
+            $outputArray += "Version: $version"
+            $outputArray += "Publisher: $publisher"
+            $outputArray += "InstallLocation: $installLocation"
+            $outputArray += "---------------------------------------------------"
+        }
+    }
+}
+
+# Set the output text in the text box
+$txtOutput.Text = $outputArray -join "`r`n"
 }
 
 # Add the search function to the button click event
@@ -153,4 +162,22 @@ $form.Controls.Add($btnSearch)
 $form.Controls.Add($txtOutput)
 
 # Show the form
-$form.ShowDialog() | Out-Null
+Write-Host "Displaying GUI..."
+$form.Add_Shown({$form.Activate()})
+
+# Check if the script is being run from the command line
+if ($Host.Name -eq "ConsoleHost") {
+    Write-Host "Running in console mode. Performing test search..."
+    $txtAppName.Text = "Notepad"
+    Search
+    Write-Host "Search results:"
+    Write-Host $txtOutput.Text
+    Write-Host "Test search completed. Exiting console mode."
+    exit
+}
+
+[void]$form.ShowDialog()
+}
+catch {
+    Show-Error "An error occurred: $_"
+}
