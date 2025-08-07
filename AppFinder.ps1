@@ -20,7 +20,7 @@ try {
     # Create a form
     $form = New-Object System.Windows.Forms.Form
     $form.Text = "App Finder"
-    $form.Width = 400
+    $form.Width = 550
     $form.Height = 400
     $form.StartPosition = "CenterScreen"
 
@@ -62,21 +62,23 @@ $txtAppName.Width = 200
 # Create a button for searching
 $btnSearch = New-Object System.Windows.Forms.Button
 $btnSearch.Text = "Search"
-$btnSearch.Location = New-Object System.Drawing.Point(50, 60)
+$btnSearch.Location = New-Object System.Drawing.Point(20, 60)
+$btnSearch.Width = 100
 
 # Create a text box for displaying the output
 $txtOutput = New-Object System.Windows.Forms.TextBox
 $txtOutput.Multiline = $true
 $txtOutput.ScrollBars = "Vertical"
 $txtOutput.Location = New-Object System.Drawing.Point(20, 100)
-$txtOutput.Width = 360
+$txtOutput.Width = 510
 $txtOutput.Height = 240
 $txtOutput.ReadOnly = $true
 
 # Create a "Copy to Clipboard" button
 $btnCopyToClipboard = New-Object System.Windows.Forms.Button
 $btnCopyToClipboard.Text = "Copy"
-$btnCopyToClipboard.Location = New-Object System.Drawing.Point(150, 60)
+$btnCopyToClipboard.Location = New-Object System.Drawing.Point(130, 60)
+$btnCopyToClipboard.Width = 100
 $btnCopyToClipboard.Add_Click({
     [System.Windows.Forms.Clipboard]::SetText($txtOutput.Text)
 })
@@ -87,7 +89,8 @@ $form.Controls.Add($btnCopyToClipboard)
 # Create a "Open in Notepad" button
 $btnOpenInNotepad = New-Object System.Windows.Forms.Button
 $btnOpenInNotepad.Text = "Notepad"
-$btnOpenInNotepad.Location = New-Object System.Drawing.Point(250, 60)  # You might want to adjust the location as needed
+$btnOpenInNotepad.Location = New-Object System.Drawing.Point(240, 60)
+$btnOpenInNotepad.Width = 100
 
 $btnOpenInNotepad.Add_Click({
     # Create a temporary text file
@@ -103,9 +106,54 @@ $btnOpenInNotepad.Add_Click({
 # Add the "Open in Notepad" button to the form
 $form.Controls.Add($btnOpenInNotepad)
 
+# Create an "Uninstall" button
+$btnUninstall = New-Object System.Windows.Forms.Button
+$btnUninstall.Text = "Uninstall"
+$btnUninstall.Location = New-Object System.Drawing.Point(400, 60)
+$btnUninstall.Width = 100
+$btnUninstall.Enabled = $false
+
+$btnUninstall.Add_Click({
+    Uninstall
+})
+
+# Add the "Uninstall" button to the form
+$form.Controls.Add($btnUninstall)
+
+# Global variable to store uninstall information
+$script:uninstallInfo = @()
+
+# Function to handle the uninstall process
+function Uninstall {
+    if ($script:uninstallInfo.Count -eq 0) {
+        [System.Windows.Forms.MessageBox]::Show("No uninstall information available.", "Error", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Error)
+        return
+    }
+
+    if ($script:uninstallInfo.Count -eq 1) {
+        $selectedUninstall = $script:uninstallInfo[0]
+    } else {
+        $selectedUninstall = $script:uninstallInfo | Select-Object @{Name='Application';Expression={$_.DisplayName}}, @{Name='UninstallString';Expression={$_.UninstallString}} | Out-GridView -Title "Select an Application to Uninstall" -OutputMode Single
+    }
+
+    if ($selectedUninstall) {
+        try {
+            $uninstallString = $selectedUninstall.UninstallString
+            Write-Log "Executing uninstall string for $($selectedUninstall.Application): $uninstallString"
+            Start-Process -FilePath "cmd.exe" -ArgumentList "/c $uninstallString" -Wait
+            [System.Windows.Forms.MessageBox]::Show("Uninstall process completed for $($selectedUninstall.Application). Please verify if the application was successfully removed.", "Uninstall Complete", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Information)
+        } catch {
+            $errorMessage = $_.Exception.Message
+            Write-Log "Error during uninstall: $errorMessage"
+            [System.Windows.Forms.MessageBox]::Show("An error occurred during the uninstall process: $errorMessage", "Error", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Error)
+        }
+    }
+}
 
 # Define the search function
 function Search {
+    $script:uninstallInfo = @()
+    $btnUninstall.Enabled = $false
     $targetAppName = $txtAppName.Text
 
     # Define the registry paths for uninstall information
@@ -144,12 +192,22 @@ foreach ($path in $registryPaths) {
             $outputArray += "Publisher: $publisher"
             $outputArray += "InstallLocation: $installLocation"
             $outputArray += "---------------------------------------------------"
+            
+            if ($uninstallString) {
+                $script:uninstallInfo += [PSCustomObject]@{
+                    DisplayName = $displayName
+                    UninstallString = $uninstallString
+                }
+            }
         }
     }
 }
 
 # Set the output text in the text box
 $txtOutput.Text = $outputArray -join "`r`n"
+
+# Enable or disable the Uninstall button based on search results
+$btnUninstall.Enabled = $script:uninstallInfo.Count -gt 0
 }
 
 # Add the search function to the button click event
