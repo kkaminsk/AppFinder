@@ -4,6 +4,9 @@ Easily search for an application and get the necessary information such as Unins
 
 Originally written by Marin Alexandruradu. This is a fork by Kevin Kaminski to add some extra functionality.
 
+## Requirements
+Run this code with PowerShell 5.
+
 ## Features
 
 - GUI-based application search

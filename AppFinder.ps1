@@ -1,4 +1,5 @@
-﻿Add-Type -AssemblyName System.Windows.Forms
+﻿# Use PowerShell 5
+Add-Type -AssemblyName System.Windows.Forms
 
 # Error handling function
 function Show-Error {
