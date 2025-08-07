@@ -8,7 +8,7 @@ Originally written by Marin Alexandruradu. This is a fork by Kevin Kaminski to a
 
 - GUI-based application search
 - Console mode for quick searches
-- Retrieves uninstall information from Windows registry
+- Retrieves information from Windows registry
 - Copy search results to clipboard
 - Open search results in Notepad
 
@@ -28,13 +28,15 @@ Originally written by Marin Alexandruradu. This is a fork by Kevin Kaminski to a
 
 ### Console Mode
 
-Run the script from the command line to perform a quick search for "Notepad":
+Run the script from the command line to perform a quick search and then launch the GUI:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\AppFinder.ps1
 ```
 
-## PowerShell Code Overview
+When run in console mode, the script will prompt you to enter an application name to search for. After performing the search, it will display the results in the console and then launch the GUI for further use.
+
+## PowerShell Script Overview
 
 The `AppFinder.ps1` script includes the following main components:
 
@@ -56,3 +58,11 @@ The script searches the following registry paths for installed applications:
 ## Known Issues
 
 There's an unexpected "0 0" output at the beginning of the script execution. This doesn't affect the core functionality but may be confusing for users. We're investigating this issue for future improvements.
+
+## Contributing
+
+Contributions to improve AppFinder are welcome. Please feel free to submit pull requests or create issues for bugs and feature requests.
+
+## License
+
+This project is open-source and available under the [MIT License](LICENSE).

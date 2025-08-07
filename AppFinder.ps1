@@ -6,8 +6,15 @@ function Show-Error {
     [System.Windows.Forms.MessageBox]::Show($errorMessage, "Error", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Error)
 }
 
+# Logging function
+function Write-Log {
+    param([string]$message)
+    Write-Host "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') - $message"
+}
+
 try {
-    Write-Host "Creating GUI..."
+    Write-Log "Script started"
+    Write-Log "Creating GUI..."
     
     # Create a form
     $form = New-Object System.Windows.Forms.Form
@@ -162,22 +169,30 @@ $form.Controls.Add($btnSearch)
 $form.Controls.Add($txtOutput)
 
 # Show the form
-Write-Host "Displaying GUI..."
+Write-Log "Displaying GUI..."
 $form.Add_Shown({$form.Activate()})
 
 # Check if the script is being run from the command line
 if ($Host.Name -eq "ConsoleHost") {
-    Write-Host "Running in console mode. Performing test search..."
-    $txtAppName.Text = "Notepad"
+    Write-Log "Running in console mode."
+    $consoleAppName = Read-Host "Enter the application name to search for"
+    Write-Log "Searching for: $consoleAppName"
+    $txtAppName.Text = $consoleAppName
     Search
-    Write-Host "Search results:"
-    Write-Host $txtOutput.Text
-    Write-Host "Test search completed. Exiting console mode."
-    exit
+    Write-Log "Search results:"
+    Write-Log $txtOutput.Text
+    Write-Log "Console search completed. Continuing to display GUI."
 }
 
+Write-Log "Showing dialog"
 [void]$form.ShowDialog()
+Write-Log "Dialog closed"
 }
 catch {
-    Show-Error "An error occurred: $_"
+    $errorMessage = $_.Exception.Message
+    Write-Log "Error occurred: $errorMessage"
+    Show-Error "An error occurred: $errorMessage"
+}
+finally {
+    Write-Log "Script ended"
 }
