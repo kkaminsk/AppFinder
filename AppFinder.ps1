@@ -1,4 +1,4 @@
-﻿# Use PowerShell 5
+# Use PowerShell 5
 Add-Type -AssemblyName System.Windows.Forms
 
 # Error handling function
@@ -21,66 +21,99 @@ try {
     $form = New-Object System.Windows.Forms.Form
     $form.Text = "App Finder"
     $form.Width = 550
-    $form.Height = 400
+    $form.Height = 450
     $form.StartPosition = "CenterScreen"
 
-# Create a menu bar
-$mainMenu = New-Object System.Windows.Forms.MainMenu
+# Create a menu strip
+$menuStrip = New-Object System.Windows.Forms.MenuStrip
 
-# Create a "Help" menu
-$menuHelp = New-Object System.Windows.Forms.MenuItem
+# Create "Copy to Clipboard" menu item
+$menuCopyToClipboard = New-Object System.Windows.Forms.ToolStripMenuItem
+$menuCopyToClipboard.Text = "Copy to Clipboard"
+$menuCopyToClipboard.Add_Click({
+    if (-not [string]::IsNullOrWhiteSpace($txtOutput.Text)) {
+        [System.Windows.Forms.Clipboard]::SetText($txtOutput.Text)
+    } else {
+        [System.Windows.Forms.MessageBox]::Show("No content to copy.", "Information", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Information)
+    }
+})
+$menuStrip.Items.Add($menuCopyToClipboard) | Out-Null
+
+# Create "Open in Notepad" menu item
+$menuOpenInNotepad = New-Object System.Windows.Forms.ToolStripMenuItem
+$menuOpenInNotepad.Text = "Open in Notepad"
+$menuOpenInNotepad.Add_Click({
+    # Create a temporary text file
+    $tempFile = [System.IO.Path]::GetTempFileName()
+
+    # Write the output to the file
+    $txtOutput.Text | Out-File -FilePath $tempFile -Encoding utf8
+
+    # Open the file in Notepad
+    Start-Process -FilePath "notepad.exe" -ArgumentList $tempFile
+})
+$menuStrip.Items.Add($menuOpenInNotepad) | Out-Null
+
+# Create "Clear" menu item
+$menuClearTextbox = New-Object System.Windows.Forms.ToolStripMenuItem
+$menuClearTextbox.Text = "Clear"
+$menuClearTextbox.Add_Click({
+    $txtOutput.Text = ""
+})
+$menuStrip.Items.Add($menuClearTextbox) | Out-Null
+
+# Create "Help" menu
+$menuHelp = New-Object System.Windows.Forms.ToolStripMenuItem
 $menuHelp.Text = "Help"
 
-# Create an "About" menu item
-$menuAbout = New-Object System.Windows.Forms.MenuItem
+# Create "About" submenu item
+$menuAbout = New-Object System.Windows.Forms.ToolStripMenuItem
 $menuAbout.Text = "About"
-
-# Handle the "About" menu item click event
 $menuAbout.Add_Click({
     Start-Process "https://github.com/kkaminsk/AppFinder"
 })
+$menuHelp.DropDownItems.Add($menuAbout) | Out-Null
+$menuStrip.Items.Add($menuHelp) | Out-Null
 
-# Add the "About" menu item to the "Help" menu
-$menuHelp.MenuItems.Add($menuAbout)
-
-# Add the "Help" menu to the main menu
-$mainMenu.MenuItems.Add($menuHelp)
-
-# Set the form's menu to the main menu
-$form.Menu = $mainMenu
+# Add the menu strip to the form
+$form.Controls.Add($menuStrip)
 
 # Create a label and textbox for the application name
 $lblAppName = New-Object System.Windows.Forms.Label
 $lblAppName.Text = "Application Name:"
-$lblAppName.Location = New-Object System.Drawing.Point(20, 20)
+$lblAppName.Location = New-Object System.Drawing.Point(20, 45)
 $lblAppName.AutoSize = $true
 
 $txtAppName = New-Object System.Windows.Forms.TextBox
-$txtAppName.Location = New-Object System.Drawing.Point(150, 20)
+$txtAppName.Location = New-Object System.Drawing.Point(150, 45)
 $txtAppName.Width = 200
 
 # Create a button for searching
 $btnSearch = New-Object System.Windows.Forms.Button
 $btnSearch.Text = "Search"
-$btnSearch.Location = New-Object System.Drawing.Point(20, 60)
+$btnSearch.Location = New-Object System.Drawing.Point(20, 85)
 $btnSearch.Width = 100
 
 # Create a text box for displaying the output
 $txtOutput = New-Object System.Windows.Forms.TextBox
 $txtOutput.Multiline = $true
 $txtOutput.ScrollBars = "Vertical"
-$txtOutput.Location = New-Object System.Drawing.Point(20, 100)
+$txtOutput.Location = New-Object System.Drawing.Point(20, 125)
 $txtOutput.Width = 510
-$txtOutput.Height = 240
+$txtOutput.Height = 215
 $txtOutput.ReadOnly = $true
 
 # Create a "Copy to Clipboard" button
 $btnCopyToClipboard = New-Object System.Windows.Forms.Button
 $btnCopyToClipboard.Text = "Copy"
-$btnCopyToClipboard.Location = New-Object System.Drawing.Point(130, 60)
+$btnCopyToClipboard.Location = New-Object System.Drawing.Point(130, 85)
 $btnCopyToClipboard.Width = 100
 $btnCopyToClipboard.Add_Click({
-    [System.Windows.Forms.Clipboard]::SetText($txtOutput.Text)
+    if (-not [string]::IsNullOrWhiteSpace($txtOutput.Text)) {
+        [System.Windows.Forms.Clipboard]::SetText($txtOutput.Text)
+    } else {
+        [System.Windows.Forms.MessageBox]::Show("No content to copy.", "Information", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Information)
+    }
 })
 
 # Add the "Copy to Clipboard" button to the form
@@ -89,7 +122,7 @@ $form.Controls.Add($btnCopyToClipboard)
 # Create a "Open in Notepad" button
 $btnOpenInNotepad = New-Object System.Windows.Forms.Button
 $btnOpenInNotepad.Text = "Notepad"
-$btnOpenInNotepad.Location = New-Object System.Drawing.Point(240, 60)
+$btnOpenInNotepad.Location = New-Object System.Drawing.Point(240, 85)
 $btnOpenInNotepad.Width = 100
 
 $btnOpenInNotepad.Add_Click({
@@ -109,7 +142,7 @@ $form.Controls.Add($btnOpenInNotepad)
 # Create an "Uninstall" button
 $btnUninstall = New-Object System.Windows.Forms.Button
 $btnUninstall.Text = "Uninstall"
-$btnUninstall.Location = New-Object System.Drawing.Point(400, 60)
+$btnUninstall.Location = New-Object System.Drawing.Point(400, 85)
 $btnUninstall.Width = 100
 $btnUninstall.Enabled = $false
 
@@ -119,6 +152,16 @@ $btnUninstall.Add_Click({
 
 # Add the "Uninstall" button to the form
 $form.Controls.Add($btnUninstall)
+
+# Create a progress bar
+$progressBar = New-Object System.Windows.Forms.ProgressBar
+$progressBar.Location = New-Object System.Drawing.Point(20, 375)
+$progressBar.Width = 510
+$progressBar.Height = 20
+$progressBar.Style = 'Continuous'
+$progressBar.Visible = $false
+
+$form.Controls.Add($progressBar)
 
 # Global variable to store uninstall information
 $script:uninstallInfo = @()
@@ -156,12 +199,19 @@ function Search {
     $btnUninstall.Enabled = $false
     $targetAppName = $txtAppName.Text
 
+    # Show and reset progress bar
+    $progressBar.Visible = $true
+    $progressBar.Value = 0
+
     # Define the registry paths for uninstall information
     $registryPaths = @(
         "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall",
         "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall",
         "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"
     )
+
+    # Set progress bar maximum value
+    $progressBar.Maximum = $registryPaths.Count
 
 # Create an array to store the output
 $outputArray = @()
@@ -172,6 +222,9 @@ foreach ($path in $registryPaths) {
 
     # Skip if the registry path doesn't exist
     if (-not $uninstallKeys) {
+        # Increment progress even if path doesn't exist
+        $progressBar.Value++
+        $form.Refresh()
         continue
     }
 
@@ -201,10 +254,17 @@ foreach ($path in $registryPaths) {
             }
         }
     }
+    
+    # Increment progress bar after processing each registry path
+    $progressBar.Value++
+    $form.Refresh()
 }
 
 # Set the output text in the text box
 $txtOutput.Text = $outputArray -join "`r`n"
+
+# Hide progress bar when complete
+$progressBar.Visible = $false
 
 # Enable or disable the Uninstall button based on search results
 $btnUninstall.Enabled = $script:uninstallInfo.Count -gt 0

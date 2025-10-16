@@ -20,12 +20,15 @@ Originally written by Marin Alexandruradu. This is a fork by Kevin Kaminski with
 - **Real-time logging** with timestamps for debugging and monitoring
 
 ### User Interface Features
-- **Menu system** with Help menu and About option linking to GitHub repository
+- **Modern menu bar** with Copy to Clipboard, Open in Notepad, Clear, and Help menus
+- **Progress bar** providing visual feedback during registry scanning operations
 - **Search input** with Enter key support for quick searches
 - **Multi-line output display** with vertical scrolling
-- **Copy to Clipboard** functionality for easy sharing of results
-- **Open in Notepad** feature for external viewing and editing of results
+- **Copy to Clipboard** functionality (menu and button) with validation to prevent errors on empty results
+- **Open in Notepad** feature (menu and button) for external viewing and editing of results
+- **Clear function** to quickly reset the output display
 - **One-click Uninstall** with intelligent selection for multiple uninstall options
+- **Dual access methods** - most features accessible via both menu bar and buttons
 
 ### Advanced Capabilities
 - **Multiple registry path scanning**:
@@ -52,9 +55,11 @@ Originally written by Marin Alexandruradu. This is a fork by Kevin Kaminski with
    - Results will display in the output area below
 
 3. **View and manage results**:
-   - **Copy**: Click to copy all search results to clipboard
-   - **Notepad**: Click to open results in a new Notepad window
+   - **Copy**: Click the button or use menu → Copy to Clipboard to copy results
+   - **Notepad**: Click the button or use menu → Open in Notepad to view results externally
+   - **Clear**: Use menu → Clear to reset the output display
    - **Uninstall**: Click to uninstall the found application(s)
+   - **Progress Bar**: Watch the progress bar at the bottom during searches
 
 4. **Access help**:
    - Use the Help menu → About to visit the GitHub repository
@@ -93,18 +98,20 @@ For each matching application, AppFinder displays:
 ## Technical Details
 
 ### Architecture
-- Built using .NET Windows Forms for cross-compatibility
-- Implements comprehensive error handling with try-catch blocks
+- Built using modern .NET Windows Forms API (MenuStrip, ToolStripMenuItem)
+- Implements comprehensive error handling with try-catch blocks and input validation
 - Uses PowerShell's registry access capabilities
-- Supports both synchronous and asynchronous operations
+- Real-time UI updates with progress feedback
+- Null-safe clipboard operations to prevent exceptions
 
 ### Logging System
 The script includes detailed logging with timestamps:
 - Script startup and shutdown events
 - GUI creation and display events
-- Search operations and results
+- Search operations with progress tracking
 - Error conditions and exceptions
 - Console mode operations
+- Uninstall operations and outcomes
 
 ### Error Handling
 - Registry access errors are handled gracefully
@@ -127,6 +134,7 @@ The script includes detailed logging with timestamps:
 2. **Execution Policy errors**: Use `-ExecutionPolicy Bypass` parameter
 3. **No results found**: Try partial application names or check if the application is properly installed
 4. **Uninstall failures**: Some applications require specific parameters or elevated privileges
+5. **Empty clipboard operations**: The app now validates content before copying and displays a message if empty
 
 ### Logging
 All operations are logged with timestamps. Monitor the console output for detailed information about script execution and any errors encountered.
@@ -146,10 +154,16 @@ This project is open-source and available under the [MIT License](LICENSE).
 ## Changelog
 
 ### Current Version (Kevin Kaminski Fork)
-- Enhanced GUI with menu system
-- Added copy to clipboard functionality
-- Implemented Notepad integration
-- Added comprehensive error handling and logging
-- Improved uninstall functionality with GridView selection
-- Added console mode support
-- Enhanced registry scanning across multiple hives
+- **Modern UI**: Migrated to MenuStrip API for better compatibility
+- **Progress Bar**: Visual feedback during registry searches
+- **Enhanced Menu System**: Copy, Open in Notepad, Clear, and Help menus
+- **Dual Access**: Features available via both menu bar and buttons
+- **Input Validation**: Null-safe clipboard operations prevent exceptions
+- **Copy to Clipboard**: Available in both menu and button with validation
+- **Notepad Integration**: Export results to temporary file for external viewing
+- **Clear Function**: Quick reset of output display
+- **Comprehensive Error Handling**: Try-catch blocks with user-friendly messages
+- **Uninstall Functionality**: GridView selection for multiple uninstall options
+- **Console Mode Support**: Interactive CLI with GUI fallback
+- **Multi-Registry Scanning**: 64-bit, 32-bit, and user-specific registry paths
+- **Real-time Logging**: Timestamped events for debugging and monitoring
