@@ -1,12 +1,28 @@
-## minor tweaks to UI and Progress bar
+# Use PowerShell 5
 Add-Type -AssemblyName System.Windows.Forms
 
-# Create a form
-$form = New-Object System.Windows.Forms.Form
-$form.Text = "App Finder"
-$form.Width = 400
-$form.Height = 450  # Adjusted form height to accommodate progress bar
-$form.StartPosition = "CenterScreen"
+# Error handling function
+function Show-Error {
+    param([string]$errorMessage)
+    [System.Windows.Forms.MessageBox]::Show($errorMessage, "Error", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Error)
+}
+
+# Logging function
+function Write-Log {
+    param([string]$message)
+    Write-Host "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') - $message"
+}
+
+try {
+    Write-Log "Script started"
+    Write-Log "Creating GUI..."
+    
+    # Create a form
+    $form = New-Object System.Windows.Forms.Form
+    $form.Text = "App Finder"
+    $form.Width = 550
+    $form.Height = 450
+    $form.StartPosition = "CenterScreen"
 
 # Create a menu bar
 $mainMenu = New-Object System.Windows.Forms.MainMenu
@@ -18,6 +34,8 @@ $menuHelp.Text = "Help"
 # Create an "About" menu item
 $menuAbout = New-Object System.Windows.Forms.MenuItem
 $menuAbout.Text = "About"
+
+# Handle the "About" menu item click event
 $menuAbout.Add_Click({
     Start-Process "https://github.com/kkaminsk/AppFinder"
 })
@@ -81,29 +99,113 @@ $txtAppName.Width = 200
 # Create a button for searching
 $btnSearch = New-Object System.Windows.Forms.Button
 $btnSearch.Text = "Search"
-$btnSearch.Location = New-Object System.Drawing.Point(50, 60)
+$btnSearch.Location = New-Object System.Drawing.Point(20, 60)
+$btnSearch.Width = 100
 
 # Create a text box for displaying the output
 $txtOutput = New-Object System.Windows.Forms.TextBox
 $txtOutput.Multiline = $true
 $txtOutput.ScrollBars = "Vertical"
 $txtOutput.Location = New-Object System.Drawing.Point(20, 100)
-$txtOutput.Width = 360
+$txtOutput.Width = 510
 $txtOutput.Height = 240
 $txtOutput.ReadOnly = $true
 
+# Create a "Copy to Clipboard" button
+$btnCopyToClipboard = New-Object System.Windows.Forms.Button
+$btnCopyToClipboard.Text = "Copy"
+$btnCopyToClipboard.Location = New-Object System.Drawing.Point(130, 60)
+$btnCopyToClipboard.Width = 100
+$btnCopyToClipboard.Add_Click({
+    [System.Windows.Forms.Clipboard]::SetText($txtOutput.Text)
+})
+
+# Add the "Copy to Clipboard" button to the form
+$form.Controls.Add($btnCopyToClipboard)
+
+# Create a "Open in Notepad" button
+$btnOpenInNotepad = New-Object System.Windows.Forms.Button
+$btnOpenInNotepad.Text = "Notepad"
+$btnOpenInNotepad.Location = New-Object System.Drawing.Point(240, 60)
+$btnOpenInNotepad.Width = 100
+
+$btnOpenInNotepad.Add_Click({
+    # Create a temporary text file
+    $tempFile = [System.IO.Path]::GetTempFileName()
+
+    # Write the output to the file
+    $txtOutput.Text | Out-File -FilePath $tempFile -Encoding utf8
+
+    # Open the file in Notepad
+    Start-Process -FilePath "notepad.exe" -ArgumentList $tempFile
+})
+
+# Add the "Open in Notepad" button to the form
+$form.Controls.Add($btnOpenInNotepad)
+
+# Create an "Uninstall" button
+$btnUninstall = New-Object System.Windows.Forms.Button
+$btnUninstall.Text = "Uninstall"
+$btnUninstall.Location = New-Object System.Drawing.Point(400, 60)
+$btnUninstall.Width = 100
+$btnUninstall.Enabled = $false
+
+$btnUninstall.Add_Click({
+    Uninstall
+})
+
+# Add the "Uninstall" button to the form
+$form.Controls.Add($btnUninstall)
+
 # Create a progress bar
 $progressBar = New-Object System.Windows.Forms.ProgressBar
-$progressBar.Location = New-Object System.Drawing.Point(20, 346)  # Adjusted the Y-axis location
-$progressBar.Width = 360
+$progressBar.Location = New-Object System.Drawing.Point(20, 350)
+$progressBar.Width = 510
 $progressBar.Height = 20
 $progressBar.Style = 'Continuous'
+$progressBar.Visible = $false
 
 $form.Controls.Add($progressBar)
 
+# Global variable to store uninstall information
+$script:uninstallInfo = @()
+
+# Function to handle the uninstall process
+function Uninstall {
+    if ($script:uninstallInfo.Count -eq 0) {
+        [System.Windows.Forms.MessageBox]::Show("No uninstall information available.", "Error", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Error)
+        return
+    }
+
+    if ($script:uninstallInfo.Count -eq 1) {
+        $selectedUninstall = $script:uninstallInfo[0]
+    } else {
+        $selectedUninstall = $script:uninstallInfo | Select-Object @{Name='Application';Expression={$_.DisplayName}}, @{Name='UninstallString';Expression={$_.UninstallString}} | Out-GridView -Title "Select an Application to Uninstall" -OutputMode Single
+    }
+
+    if ($selectedUninstall) {
+        try {
+            $uninstallString = $selectedUninstall.UninstallString
+            Write-Log "Executing uninstall string for $($selectedUninstall.Application): $uninstallString"
+            Start-Process -FilePath "cmd.exe" -ArgumentList "/c $uninstallString" -Wait
+            [System.Windows.Forms.MessageBox]::Show("Uninstall process completed for $($selectedUninstall.Application). Please verify if the application was successfully removed.", "Uninstall Complete", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Information)
+        } catch {
+            $errorMessage = $_.Exception.Message
+            Write-Log "Error during uninstall: $errorMessage"
+            [System.Windows.Forms.MessageBox]::Show("An error occurred during the uninstall process: $errorMessage", "Error", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Error)
+        }
+    }
+}
+
 # Define the search function
 function Search {
+    $script:uninstallInfo = @()
+    $btnUninstall.Enabled = $false
     $targetAppName = $txtAppName.Text
+
+    # Show and reset progress bar
+    $progressBar.Visible = $true
+    $progressBar.Value = 0
 
     # Define the registry paths for uninstall information
     $registryPaths = @(
@@ -114,49 +216,62 @@ function Search {
 
     # Set progress bar maximum value
     $progressBar.Maximum = $registryPaths.Count
-    $progressBar.Value = 0
 
-    # Create a string builder to store the output
-    $output = New-Object System.Text.StringBuilder
+# Create an array to store the output
+$outputArray = @()
 
-    # Loop through each registry path and retrieve the list of subkeys
-    foreach ($path in $registryPaths) {
-        $uninstallKeys = Get-ChildItem -Path $path -ErrorAction SilentlyContinue
+# Loop through each registry path and retrieve the list of subkeys
+foreach ($path in $registryPaths) {
+    $uninstallKeys = Get-ChildItem -Path $path -ErrorAction SilentlyContinue
 
-        # Skip if the registry path doesn't exist
-        if (-not $uninstallKeys) {
-            continue
-        }
-
-        # Loop through each uninstall key and append the properties of the target application to the output
-        foreach ($key in $uninstallKeys) {
-            $keyPath = Join-Path -Path $path -ChildPath $key.PSChildName
-
-            $displayName = (Get-ItemProperty -Path $keyPath -Name "DisplayName" -ErrorAction SilentlyContinue).DisplayName
-            $uninstallString = (Get-ItemProperty -Path $keyPath -Name "UninstallString" -ErrorAction SilentlyContinue).UninstallString
-            $version = (Get-ItemProperty -Path $keyPath -Name "DisplayVersion" -ErrorAction SilentlyContinue).DisplayVersion
-            $publisher = (Get-ItemProperty -Path $keyPath -Name "Publisher" -ErrorAction SilentlyContinue).Publisher
-            $installLocation = (Get-ItemProperty -Path $keyPath -Name "InstallLocation" -ErrorAction SilentlyContinue).InstallLocation
-
-            if ($displayName -match $targetAppName) {
-                $output.AppendLine("DisplayName: $displayName")
-                $output.AppendLine("UninstallString: $uninstallString")
-                $output.AppendLine("Version: $version")
-                $output.AppendLine("Publisher: $publisher")
-                $output.AppendLine("InstallLocation: $installLocation")
-                $output.AppendLine("---------------------------------------------------")
-            }
-        }
-
-        # Increase the value of progress bar
+    # Skip if the registry path doesn't exist
+    if (-not $uninstallKeys) {
+        # Increment progress even if path doesn't exist
         $progressBar.Value++
+        $form.Refresh()
+        continue
     }
 
-    # Set the output text in the text box
-    $txtOutput.Text = $output.ToString()
+    # Loop through each uninstall key and append the properties of the target application to the output
+    foreach ($key in $uninstallKeys) {
+        $keyPath = Join-Path -Path $path -ChildPath $key.PSChildName
 
-    # Reset progress bar
-    $progressBar.Value = 0
+        $displayName = (Get-ItemProperty -Path $keyPath -Name "DisplayName" -ErrorAction SilentlyContinue).DisplayName
+        $uninstallString = (Get-ItemProperty -Path $keyPath -Name "UninstallString" -ErrorAction SilentlyContinue).UninstallString
+        $version = (Get-ItemProperty -Path $keyPath -Name "DisplayVersion" -ErrorAction SilentlyContinue).DisplayVersion
+        $publisher = (Get-ItemProperty -Path $keyPath -Name "Publisher" -ErrorAction SilentlyContinue).Publisher
+        $installLocation = (Get-ItemProperty -Path $keyPath -Name "InstallLocation" -ErrorAction SilentlyContinue).InstallLocation
+
+        if ($displayName -match $targetAppName) {
+            $outputArray += "DisplayName: $displayName"
+            $outputArray += "UninstallString: $uninstallString"
+            $outputArray += "Version: $version"
+            $outputArray += "Publisher: $publisher"
+            $outputArray += "InstallLocation: $installLocation"
+            $outputArray += "---------------------------------------------------"
+            
+            if ($uninstallString) {
+                $script:uninstallInfo += [PSCustomObject]@{
+                    DisplayName = $displayName
+                    UninstallString = $uninstallString
+                }
+            }
+        }
+    }
+    
+    # Increment progress bar after processing each registry path
+    $progressBar.Value++
+    $form.Refresh()
+}
+
+# Set the output text in the text box
+$txtOutput.Text = $outputArray -join "`r`n"
+
+# Hide progress bar when complete
+$progressBar.Visible = $false
+
+# Enable or disable the Uninstall button based on search results
+$btnUninstall.Enabled = $script:uninstallInfo.Count -gt 0
 }
 
 # Add the search function to the button click event
@@ -177,4 +292,30 @@ $form.Controls.Add($btnSearch)
 $form.Controls.Add($txtOutput)
 
 # Show the form
-$form.ShowDialog() | Out-Null
+Write-Log "Displaying GUI..."
+$form.Add_Shown({$form.Activate()})
+
+# Check if the script is being run from the command line
+if ($Host.Name -eq "ConsoleHost") {
+    Write-Log "Running in console mode."
+    $consoleAppName = Read-Host "Enter the application name to search for"
+    Write-Log "Searching for: $consoleAppName"
+    $txtAppName.Text = $consoleAppName
+    Search
+    Write-Log "Search results:"
+    Write-Log $txtOutput.Text
+    Write-Log "Console search completed. Continuing to display GUI."
+}
+
+Write-Log "Showing dialog"
+[void]$form.ShowDialog()
+Write-Log "Dialog closed"
+}
+catch {
+    $errorMessage = $_.Exception.Message
+    Write-Log "Error occurred: $errorMessage"
+    Show-Error "An error occurred: $errorMessage"
+}
+finally {
+    Write-Log "Script ended"
+}
