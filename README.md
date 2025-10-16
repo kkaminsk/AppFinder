@@ -105,13 +105,30 @@ For each matching application, AppFinder displays:
 - Null-safe clipboard operations to prevent exceptions
 
 ### Logging System
-The script includes detailed logging with timestamps:
-- Script startup and shutdown events
-- GUI creation and display events
-- Search operations with progress tracking
+The script includes comprehensive file-based and console logging:
+
+**Log Files:**
+- Location: `.\logs\` directory (relative to script)
+- Format: `AppFinder-YYYY-MM-DD.log` (daily rotation)
+- Retention: 30 days (automatic cleanup on startup)
+- Structure: `[YYYY-MM-DD HH:MM:SS] [LEVEL] Message`
+
+**Log Levels:**
+- **INFO**: Normal operations (searches, button clicks, menu selections)
+- **WARNING**: Non-critical issues (empty searches, inaccessible registry paths, cancelled operations)
+- **ERROR**: Critical failures (uninstall errors, unhandled exceptions)
+
+**What Gets Logged:**
+- Application lifecycle (startup, shutdown, mode detection)
+- All user interactions (searches, clipboard operations, uninstalls)
+- Registry scanning operations and results
+- Progress bar state changes
 - Error conditions and exceptions
-- Console mode operations
-- Uninstall operations and outcomes
+- Uninstall operations with application names and outcomes
+
+**Fallback Behavior:**
+- If log file cannot be created or written, logging continues to console only
+- File system errors are suppressed to avoid disrupting the application
 
 ### Error Handling
 - Registry access errors are handled gracefully
@@ -137,7 +154,12 @@ The script includes detailed logging with timestamps:
 5. **Empty clipboard operations**: The app now validates content before copying and displays a message if empty
 
 ### Logging
-All operations are logged with timestamps. Monitor the console output for detailed information about script execution and any errors encountered.
+All operations are logged to both console and persistent log files in the `.\logs\` directory:
+- **View Logs**: Navigate to the `logs` folder in the script directory
+- **Log Format**: Daily files named `AppFinder-YYYY-MM-DD.log`
+- **Retention**: Logs older than 30 days are automatically deleted
+- **Troubleshooting**: Check log files for detailed error messages and operation history
+- **Manual Cleanup**: You can safely delete old log files if needed
 
 ## Contributing
 
@@ -166,4 +188,5 @@ This project is open-source and available under the [MIT License](LICENSE).
 - **Uninstall Functionality**: GridView selection for multiple uninstall options
 - **Console Mode Support**: Interactive CLI with GUI fallback
 - **Multi-Registry Scanning**: 64-bit, 32-bit, and user-specific registry paths
-- **Real-time Logging**: Timestamped events for debugging and monitoring
+- **Enhanced File-Based Logging**: Persistent logs with daily rotation, 30-day retention, and multi-level logging (INFO, WARNING, ERROR)
+- **Audit Trail**: Complete logging of all user actions, searches, and uninstall operations for troubleshooting and compliance
