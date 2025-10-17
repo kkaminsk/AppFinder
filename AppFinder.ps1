@@ -294,6 +294,10 @@ function Search {
     $progressBar.Value = 0
     Write-Log "Search progress started"
 
+    # Show and reset progress bar
+    $progressBar.Visible = $true
+    $progressBar.Value = 0
+
     # Define the registry paths for uninstall information
     $registryPaths = @(
         "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall",
