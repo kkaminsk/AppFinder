@@ -39,10 +39,10 @@
 - [x] 5.5 Document logging behavior in README.md
 
 ## 6. Testing
-- [ ] 6.1 Test log file creation on first run
-- [ ] 6.2 Test log rotation when file size limit reached
-- [ ] 6.3 Test logging in GUI mode
-- [ ] 6.4 Test logging in console mode
-- [ ] 6.5 Test logging when directory is read-only
-- [ ] 6.6 Verify all user actions are logged
-- [ ] 6.7 Test log file permissions and accessibility
+- [x] 6.1 Test log file creation on first run
+- [x] 6.2 Test log rotation when file size limit reached
+- [x] 6.3 Test logging in GUI mode
+- [x] 6.4 Test logging in console mode
+- [x] 6.5 Test logging when directory is read-only
+- [x] 6.6 Verify all user actions are logged
+- [x] 6.7 Test log file permissions and accessibility
